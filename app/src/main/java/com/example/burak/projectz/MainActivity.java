@@ -3,16 +3,24 @@ package com.example.burak.projectz;
 import android.bluetooth.BluetoothAdapter;
 import android.bluetooth.BluetoothDevice;
 import android.bluetooth.BluetoothSocket;
+import android.content.ActivityNotFoundException;
 import android.content.Intent;
+import android.speech.RecognizerIntent;
 import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
 import android.view.MotionEvent;
 import android.view.View;
 import android.view.View.OnClickListener;
 import android.widget.Button;
+import android.widget.ImageButton;
+import android.widget.TextView;
 import android.widget.Toast;
+import android.widget.ToggleButton;
+
 import java.io.IOException;
 import java.io.OutputStream;
+import java.util.ArrayList;
+import java.util.Locale;
 import java.util.Set;
 import java.util.UUID;
 
@@ -27,19 +35,46 @@ public class MainActivity extends AppCompatActivity {
 
     String command;
 
-    Button forward_btn, back_btn, right_btn, left_btn, stop_btn, conn_btn;
+    Button forward_btn, back_btn, right_btn, left_btn, stop_btn, conn_btn, up_btn, down_btn;
+    ToggleButton claw_btn;
+    ImageButton mic_btn;
+    TextView voiceCommand;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
 
+        conn_btn = (Button) findViewById(R.id.conn);
+        mic_btn = (ImageButton) findViewById(R.id.mic);
+        voiceCommand = (TextView) findViewById(R.id.voiceCommand_txt);
+
         forward_btn = (Button) findViewById(R.id.forward);
         back_btn = (Button) findViewById(R.id.back);
         right_btn = (Button) findViewById(R.id.right);
         left_btn = (Button) findViewById(R.id.left);
         stop_btn = (Button) findViewById(R.id.stop);
-        conn_btn = (Button) findViewById(R.id.conn);
+
+        up_btn = (Button) findViewById(R.id.up);
+        down_btn = (Button) findViewById(R.id.down);
+        claw_btn = (ToggleButton) findViewById(R.id.claw);
+
+        //Voice Command Button code
+
+        mic_btn.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                Intent intent = new Intent(RecognizerIntent.ACTION_RECOGNIZE_SPEECH);
+                intent.putExtra(RecognizerIntent.EXTRA_LANGUAGE_MODEL, RecognizerIntent.LANGUAGE_MODEL_FREE_FORM);
+                intent.putExtra(RecognizerIntent.EXTRA_LANGUAGE, Locale.ENGLISH);
+                try{
+                    startActivityForResult(intent,200);
+                }catch (ActivityNotFoundException a){
+                    Toast.makeText(getApplicationContext(),"Intent problem", Toast.LENGTH_SHORT).show();
+                }
+            }
+        });
+
 
         //OnTouchListener code for the stop button (button long press)
             stop_btn.setOnTouchListener(new View.OnTouchListener() {
@@ -239,9 +274,19 @@ public class MainActivity extends AppCompatActivity {
     }
 
     @Override
-    protected void onStart()
-    {
+    protected void onStart(){
         super.onStart();
+    }
+
+    @Override
+    protected void onActivityResult(int requestCode, int resultCode, Intent data) {
+        super.onActivityResult(requestCode, resultCode, data);
+        if(requestCode == 200){
+            if(resultCode == RESULT_OK && data != null){
+                ArrayList<String> result = data.getStringArrayListExtra(RecognizerIntent.EXTRA_RESULTS);
+                voiceCommand.setText(result.get(0));
+            }
+        }
     }
 
 }
